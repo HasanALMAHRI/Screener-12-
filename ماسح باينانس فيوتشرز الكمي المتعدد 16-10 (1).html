@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ماسح باينانس فيوتشرز الكمي | استراتيجية أول شمعة تقاطع (15m - 30m - 1h - 2h - 4h)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#131c2e',
+                            925: '#0b1120',
+                            950: '#060a13',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #060a13;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+            direction: ltr;
+            display: inline-block;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        .signal-row-long:hover {
+            background-color: rgba(16, 185, 129, 0.07);
+        }
+        .signal-row-short:hover {
+            background-color: rgba(244, 63, 94, 0.07);
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(51, 65, 85, 0.22) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 bg-grid-pattern text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Top Notification Banner (Visual Alert Box) -->
+    <div id="toastContainer" class="fixed top-4 left-4 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Header & Strategy Identity -->
+    <header class="border-b border-slate-800/80 bg-slate-925/90 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-[1650px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 font-bold text-xl">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+                            ماسح باينانس فيوتشرز الكمي المتعدد
+                        </h1>
+                        <span id="headerActiveTfBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono-num">
+                            USDT-M • 15m | 30m | 1h | 2h | 4h
+                        </span>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            أول شمعة تقاطع فقط
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        تقاطع <span class="text-slate-200 font-mono-num">RSI(14) / SMA(11)</span> مع تأكيد <span class="text-slate-200 font-mono-num">MACD(12,26,9)</span> و <span class="text-slate-200 font-mono-num">Stochastic(14,3,3)</span> وشموع <span class="text-slate-200 font-mono-num">Heikin Ashi</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Live Connection & Audio/Modal Controls -->
+            <div class="flex items-center gap-3 flex-wrap">
+                <div id="apiStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+                    <span id="apiStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="apiStatusText" class="text-slate-300 font-medium">متصل بـ Binance FAPI</span>
+                </div>
+
+                <button id="soundTestBtn" onclick="playAlertSound('test')" title="تفعيل/كتم التنبيه الصوتي" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs flex items-center gap-1.5 transition">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-amber-400"></i>
+                    <span>الصوت</span>
+                </button>
+
+                <button onclick="toggleStrategyModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-sliders text-sky-400"></i>
+                    <span>المعادلات والشروط</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-[1650px] w-full mx-auto px-4 sm:px-6 py-5 flex-1 flex flex-col gap-5">
+
+        <!-- Control Bar Panel -->
+        <section class="bg-slate-925/95 border border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+            
+            <!-- Row 1: Timeframe Selector Bar (15m, 30m, 1h, 2h, 4h + Multi-TF) -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs font-extrabold text-white">الإطار الزمني للفحص (Timeframe)</div>
+                        <div class="text-[11px] text-slate-400">اختر الفريم المطلوب أو افحص الفريمات الخمسة معاً</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800 flex-wrap flex-1 sm:flex-initial justify-end">
+                    <button id="tfBtn_15m" onclick="selectTimeframe('15m')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                        <span class="font-mono-num">15m</span>
+                        <span>(15 دقيقة)</span>
+                    </button>
+                    <button id="tfBtn_30m" onclick="selectTimeframe('30m')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800">
+                        <span class="font-mono-num">30m</span>
+                        <span>(نصف ساعة)</span>
+                    </button>
+                    <button id="tfBtn_1h" onclick="selectTimeframe('1h')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800">
+                        <span class="font-mono-num">1h</span>
+                        <span>(ساعة)</span>
+                    </button>
+                    <button id="tfBtn_2h" onclick="selectTimeframe('2h')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800">
+                        <span class="font-mono-num">2h</span>
+                        <span>(ساعتين)</span>
+                    </button>
+                    <button id="tfBtn_4h" onclick="selectTimeframe('4h')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800">
+                        <span class="font-mono-num">4h</span>
+                        <span>(4 ساعات)</span>
+                    </button>
+                    <div class="h-5 w-[1px] bg-slate-800 mx-1 hidden sm:block"></div>
+                    <button id="tfBtn_ALL_TF" onclick="selectTimeframe('ALL_TF')" class="tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-sky-400 hover:bg-slate-800 border border-sky-500/20" title="فحص جميع الفريمات (15m, 30m, 1h, 2h, 4h) بالتتابع">
+                        <i class="fa-solid fa-layer-group text-[11px]"></i>
+                        <span>جميع الفريمات (Multi-TF)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 2: Operational Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                
+                <!-- 1. Start / Stop Scan Buttons -->
+                <div class="lg:col-span-3 flex items-center gap-2.5">
+                    <button id="startScanBtn" onclick="startFullScan()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+                        <i id="scanBtnIcon" class="fa-solid fa-radar"></i>
+                        <span id="scanBtnText">بدء الفحص الآن</span>
+                    </button>
+                    <button id="stopScanBtn" onclick="stopActiveScan()" disabled class="py-3 px-4 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-stop"></i>
+                        <span>إيقاف</span>
+                    </button>
+                </div>
+
+                <!-- 2. Target Candle Selection (Live vs Last Closed) -->
+                <div class="lg:col-span-3 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 flex items-center">
+                    <button id="candleModeClosedBtn" onclick="setCandleMode('closed')" class="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                        <i class="fa-solid fa-lock text-[11px]"></i>
+                        <span>آخر شمعة مغلقة (مؤكدة)</span>
+                    </button>
+                    <button id="candleModeLiveBtn" onclick="setCandleMode('live')" class="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>الشمعة الحية (الحالية)</span>
+                    </button>
+                </div>
+
+                <!-- 3. Liquidity Filter (Min 24h Volume in USDT) -->
+                <div class="lg:col-span-3 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="liquidityToggle" checked onchange="onSettingsChanged()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">فلتر السيولة (24h)</div>
+                            <div class="text-[11px] text-slate-400">الحد الأدنى بـ USDT</div>
+                        </div>
+                    </div>
+                    <select id="liquidityThresholdSelect" onchange="onSettingsChanged()" class="bg-slate-950 border border-slate-700 text-amber-400 text-xs font-mono-num font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="1000000">1,000,000$</option>
+                        <option value="5000000" selected>5,000,000$</option>
+                        <option value="10000000">10,000,000$</option>
+                        <option value="25000000">25,000,000$</option>
+                        <option value="50000000">50,000,000$</option>
+                    </select>
+                </div>
+
+                <!-- 4. Auto-Refresh Control (Every 5 Minutes) -->
+                <div class="lg:col-span-3 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                        </label>
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">تحديث تلقائي (5 د)</div>
+                            <div class="text-[11px] text-slate-400" id="autoRefreshStatusText">متوقف حالياً</div>
+                        </div>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono-num text-sky-400 font-bold" id="countdownTimerDisplay">
+                        05:00
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Progress Bar & Batch Status Row -->
+            <div class="pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+                <div class="flex flex-wrap items-center justify-between text-xs gap-2">
+                    <div class="flex items-center gap-2">
+                        <span id="scanProgressLabel" class="font-semibold text-slate-300">جاهز لبدء الفحص الكمي على عقود USDT الدائمة...</span>
+                        <span id="batchRateBadge" class="hidden sm:inline-block px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[11px] font-mono-num">
+                            Batch Size: 15 symbols • 150 Candles
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-slate-400">
+                            العمليات المفحوصة: <strong id="scannedCountText" class="text-white font-mono-num">0 / 0</strong>
+                        </span>
+                        <span class="text-slate-400">
+                            نسبة الإنجاز: <strong id="progressPercentText" class="text-amber-400 font-mono-num">0%</strong>
+                        </span>
+                    </div>
+                </div>
+                <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800/80 p-0.5">
+                    <div id="scanProgressBar" class="h-full bg-gradient-to-r from-amber-500 via-emerald-400 to-sky-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary KPI Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Total Eligible Perpetual Contracts -->
+            <div class="bg-slate-925/90 border border-slate-800/90 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">عقود USDT الدائمة المؤهلة</p>
+                    <p id="kpiTotalSymbols" class="text-2xl font-extrabold text-white font-mono-num mt-1">0</p>
+                    <p id="kpiExcludedLiquidity" class="text-[11px] text-slate-500 mt-1">مستبعد بالسيولة: <span class="font-mono-num">0</span></p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 text-lg">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+            </div>
+
+            <!-- Long Signals Card -->
+            <div onclick="setSignalFilter('LONG')" class="cursor-pointer bg-slate-925/90 hover:bg-emerald-950/20 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between transition group">
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <p class="text-xs text-emerald-400 font-bold">إشارات الشراء (LONG)</p>
+                    </div>
+                    <p id="kpiLongSignals" class="text-3xl font-extrabold text-emerald-400 font-mono-num mt-1">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">تقاطع RSI صاعد بالشمعة الأولى</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-105 transition">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+            </div>
+
+            <!-- Short Signals Card -->
+            <div onclick="setSignalFilter('SHORT')" class="cursor-pointer bg-slate-925/90 hover:bg-rose-950/20 border border-rose-500/30 rounded-2xl p-4 flex items-center justify-between transition group">
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                        <p class="text-xs text-rose-400 font-bold">إشارات البيع (SHORT)</p>
+                    </div>
+                    <p id="kpiShortSignals" class="text-3xl font-extrabold text-rose-400 font-mono-num mt-1">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">تقاطع RSI هابط بالشمعة الأولى</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl group-hover:scale-105 transition">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                </div>
+            </div>
+
+            <!-- Near / Partial RSI Crossovers (Watchlist) -->
+            <div onclick="setSignalFilter('WATCHLIST')" class="cursor-pointer bg-slate-925/90 hover:bg-amber-950/20 border border-amber-500/25 rounded-2xl p-4 flex items-center justify-between transition group">
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <p class="text-xs text-amber-400 font-bold">تقاطع RSI أول شمعة (3/4 شروط)</p>
+                    </div>
+                    <p id="kpiWatchlistSignals" class="text-2xl font-extrabold text-amber-400 font-mono-num mt-1">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">رادار المراقبة اللصيقة</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg group-hover:scale-105 transition">
+                    <i class="fa-solid fa-binoculars"></i>
+                </div>
+            </div>
+
+            <!-- Last Update & Target Candle Timestamp -->
+            <div class="bg-slate-925/90 border border-slate-800/90 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">وقت آخر تحديث مكتمل</p>
+                    <p id="kpiLastUpdateTime" class="text-lg font-bold text-sky-400 font-mono-num mt-1">--:--:--</p>
+                    <p id="kpiCandleTimeInfo" class="text-[11px] text-slate-400 mt-1 truncate max-w-[195px]">الفريم النشط: 15m (آخر مغلقة)</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center text-sky-400 text-lg">
+                    <i class="fa-regular fa-clock"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Table Section -->
+        <section class="bg-slate-925/95 border border-slate-800/90 rounded-2xl shadow-2xl flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Table Toolbar: Tabs, Search, Sort & Export -->
+            <div class="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <!-- Filter Tabs -->
+                <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 flex-wrap">
+                    <button id="tabAll" onclick="setSignalFilter('ALL')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-amber-500 text-slate-950">
+                        جميع الإشارات المؤكدة (<span id="tabCountAll" class="font-mono-num">0</span>)
+                    </button>
+                    <button id="tabLong" onclick="setSignalFilter('LONG')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-emerald-400 hover:bg-slate-800">
+                        <i class="fa-solid fa-circle-arrow-up ml-1"></i>شراء Long (<span id="tabCountLong" class="font-mono-num">0</span>)
+                    </button>
+                    <button id="tabShort" onclick="setSignalFilter('SHORT')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-rose-400 hover:bg-slate-800">
+                        <i class="fa-solid fa-circle-arrow-down ml-1"></i>بيع Short (<span id="tabCountShort" class="font-mono-num">0</span>)
+                    </button>
+                    <button id="tabWatchlist" onclick="setSignalFilter('WATCHLIST')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-amber-400 hover:bg-slate-800" title="عملات حققت تقاطع RSI/SMA11 في أول شمعة الآن مع 3 من 4 شروط">
+                        <i class="fa-solid fa-eye ml-1"></i>رادار تقاطع RSI (3/4) (<span id="tabCountWatchlist" class="font-mono-num">0</span>)
+                    </button>
+                </div>
+
+                <!-- Search & Export Tools -->
+                <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
+                    <div class="relative flex-1 sm:w-56">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input
+                            type="text"
+                            id="symbolSearchInput"
+                            oninput="renderSignalsTable()"
+                            placeholder="بحث باسم العملة (مثل BTCUSDT)..."
+                            class="w-full bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl pr-8 pl-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                        >
+                    </div>
+
+                    <select id="sortSelect" onchange="renderSignalsTable()" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="volume_desc">الترتيب: الأعلى سيولة (24h)</option>
+                        <option value="rsi_diff_desc">الترتيب: قوة اختراق RSI للـ SMA11</option>
+                        <option value="change_desc">الترتيب: التغير اليومي %</option>
+                        <option value="tf_asc">الترتيب: حسب الفريم الزمني</option>
+                        <option value="symbol_asc">الترتيب: أبجدي (A-Z)</option>
+                    </select>
+
+                    <button onclick="exportSignalsCSV()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                        <span>تصدير CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Responsive Table Wrapper -->
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800/90 bg-slate-900/70 text-[11px] text-slate-400 uppercase tracking-wider">
+                            <th class="py-3.5 px-4 font-bold">الزوج والروابط</th>
+                            <th class="py-3.5 px-3 font-bold text-center">الفريم</th>
+                            <th class="py-3.5 px-4 font-bold text-center">نوع الإشارة</th>
+                            <th class="py-3.5 px-4 font-bold">السعر الحالي (24h%)</th>
+                            <th class="py-3.5 px-4 font-bold">تقاطع RSI(14) / SMA(11) <span class="text-amber-400">(الشمعة الأولى)</span></th>
+                            <th class="py-3.5 px-4 font-bold">حالة MACD (12,26,9)</th>
+                            <th class="py-3.5 px-4 font-bold">Stochastic (14,3,3)</th>
+                            <th class="py-3.5 px-4 font-bold text-center">شمعة Heikin Ashi</th>
+                            <th class="py-3.5 px-4 font-bold">السيولة اليومية (24h)</th>
+                            <th class="py-3.5 px-4 font-bold text-center">التفاصيل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signalsTableBody" class="divide-y divide-slate-800/60 text-sm">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State / Initial State -->
+            <div id="emptyStateContainer" class="py-16 px-4 text-center flex flex-col items-center justify-center">
+                <div id="emptyStateIconWrap" class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-400 text-2xl mb-4 shadow-inner">
+                    <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+                </div>
+                <h3 id="emptyStateTitle" class="text-base font-bold text-slate-200">جاري تهيئة الماسح الكمي لعقود باينانس الآجلة...</h3>
+                <p id="emptyStateSubtitle" class="text-xs text-slate-400 max-w-lg mt-1.5 leading-relaxed">
+                    يقوم النظام بالاتصال المباشر مع خوادم Binance Futures لجلب جميع عقود USDT الدائمة وحساب شموع الهايكن آشي والمؤشرات الفنية على الفريمات المختارة.
+                </p>
+            </div>
+
+            <!-- Table Footer Info -->
+            <div class="px-4 py-3 bg-slate-900/60 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                    <span>قاعدة صارمة: لا يتم عرض إلا العملات التي حدث فيها تقاطع <strong class="text-slate-200">RSI(14)</strong> مع <strong class="text-slate-200">SMA(11)</strong> في الشمعة المستهدفة حصرياً (<span class="font-mono-num">index = i</span>).</span>
+                </div>
+                <div id="candleTimestampFooter" class="font-mono-num text-slate-400">
+                    Supported Timeframes: 15m, 30m, 1h, 2h, 4h | Limit: 150 Candles
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal 1: Detailed Candle Inspector (Compare Candle i-1 vs Candle i) -->
+    <div id="inspectorModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-925 border border-slate-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <span id="modalSignalBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold">LONG</span>
+                    <span id="modalTimeframeBadge" class="px-2.5 py-1 rounded-lg text-xs font-mono-num font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">15m</span>
+                    <h3 id="modalSymbolTitle" class="text-lg font-extrabold text-white font-mono-num">BTCUSDT</h3>
+                    <span class="text-xs text-slate-400">مقارنة الشمعة السابقة <span class="font-mono-num">[i-1]</span> بالحالية <span class="font-mono-num">[i]</span></span>
+                </div>
+                <button onclick="closeInspectorModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="inspectorModalBody" class="p-5 space-y-4 text-xs">
+                <!-- Filled dynamically -->
+            </div>
+            <div class="px-5 py-3.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
+                <div id="modalExternalLinks" class="flex items-center gap-2"></div>
+                <button onclick="closeInspectorModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Mathematical Specifications & Strategy Rules -->
+    <div id="strategyModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-925 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-square-root-variable text-amber-400 text-lg"></i>
+                    <h3 class="text-base font-extrabold text-white">المواصفات الرياضية وشروط الاستراتيجية (15m / 30m / 1h / 2h / 4h)</h3>
+                </div>
+                <button onclick="toggleStrategyModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4 text-xs leading-relaxed text-slate-300">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30">
+                        <h4 class="font-bold text-emerald-400 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            شروط إشارة الصعود (Long Signal)
+                        </h4>
+                        <ul class="space-y-2 list-disc list-inside text-slate-300">
+                            <li><strong>شرط القدح (أول شمعة تقاطع RSI):</strong> كان <span class="font-mono-num text-white">RSI(14)[i-1] &le; SMA(11)[i-1]</span> في الشمعة السابقة، ثم اخترق صعوداً <span class="font-mono-num text-emerald-400">RSI(14)[i] &gt; SMA(11)[i]</span> في الشمعة المستهدفة.</li>
+                            <li><strong>الماكد (MACD 12,26,9):</strong> متقاطع صعوداً <span class="font-mono-num text-emerald-400">MACD Line[i] &gt; Signal Line[i]</span>.</li>
+                            <li><strong>الستوكاستيك (Stochastic 14,3,3):</strong> متقاطع صعوداً <span class="font-mono-num text-emerald-400">%K[i] &gt; %D[i]</span> مع ميل خط <span class="font-mono-num">%K</span> للصعود (<span class="font-mono-num">%K[i] &gt; %K[i-1]</span>).</li>
+                            <li><strong>شمعة الهايكن آشي (Heikin Ashi):</strong> صاعدة باللون الأخضر (<span class="font-mono-num text-emerald-400">HA_Close[i] &gt; HA_Open[i]</span>).</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30">
+                        <h4 class="font-bold text-rose-400 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-trend-down"></i>
+                            شروط إشارة الهبوط (Short Signal)
+                        </h4>
+                        <ul class="space-y-2 list-disc list-inside text-slate-300">
+                            <li><strong>شرط القدح (أول شمعة تقاطع RSI):</strong> كان <span class="font-mono-num text-white">RSI(14)[i-1] &ge; SMA(11)[i-1]</span> في الشمعة السابقة، ثم كسر هبوطاً <span class="font-mono-num text-rose-400">RSI(14)[i] &lt; SMA(11)[i]</span> في الشمعة المستهدفة.</li>
+                            <li><strong>الماكد (MACD 12,26,9):</strong> متقاطع هبوطاً <span class="font-mono-num text-rose-400">MACD Line[i] &lt; Signal Line[i]</span>.</li>
+                            <li><strong>الستوكاستيك (Stochastic 14,3,3):</strong> متقاطع هبوطاً <span class="font-mono-num text-rose-400">%K[i] &lt; %D[i]</span> مع ميل خط <span class="font-mono-num">%K</span> للهبوط (<span class="font-mono-num">%K[i] &lt; %K[i-1]</span>).</li>
+                            <li><strong>شمعة الهايكن آشي (Heikin Ashi):</strong> هابطة باللون الأحمر (<span class="font-mono-num text-rose-400">HA_Close[i] &lt; HA_Open[i]</span>).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 text-sm">المعادلات الرياضية المطبقة برمجياً على 150 شمعة تاريخية لكل فريم:</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono-num text-[11px] text-slate-300">
+                        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                            <div class="text-amber-400 font-bold mb-1">Heikin Ashi Formula:</div>
+                            HA_Close = (O + H + L + C) / 4<br>
+                            HA_Open = (HA_Open[i-1] + HA_Close[i-1]) / 2<br>
+                            HA_High = max(H, HA_Open, HA_Close)<br>
+                            HA_Low = min(L, HA_Open, HA_Close)
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                            <div class="text-sky-400 font-bold mb-1">Timeframes & Indicators:</div>
+                            Timeframes: 15m, 30m, 1h, 2h, 4h<br>
+                            RSI: Wilder's RMA (14) + SMA (11) on RSI<br>
+                            MACD: EMA(12) - EMA(26), Signal = EMA(9)<br>
+                            Stochastic: %K(14), Smooth %K = SMA(3), %D = SMA(3)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-5 py-3 bg-slate-900 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleStrategyModal()" class="px-4 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">
+                    فهمت، إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Quantitative Engine & Multi-Timeframe Logic -->
+    <script>
+        /*************************************************************************
+         * 1. GLOBAL STATE & MULTI-TIMEFRAME CONFIGURATION
+         *************************************************************************/
+        const TIMEFRAMES_MAP = {
+            '15m': { label: '15 دقيقة', tvInterval: '15', order: 1, badgeColor: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
+            '30m': { label: 'نصف ساعة', tvInterval: '30', order: 2, badgeColor: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+            '1h':  { label: 'ساعة 1H', tvInterval: '60', order: 3, badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+            '2h':  { label: 'ساعتين 2H', tvInterval: '120', order: 4, badgeColor: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+            '4h':  { label: '4 ساعات', tvInterval: '240', order: 5, badgeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' }
+        };
+
+        const SUPPORTED_TIMEFRAMES = ['15m', '30m', '1h', '2h', '4h'];
+
+        const CONFIG = {
+            BASE_URL: 'https://fapi.binance.com',
+            KLINES_LIMIT: 150,
+            BATCH_SIZE: 15,
+            BATCH_DELAY_MS: 115,
+            AUTO_REFRESH_SECONDS: 300, // 5 minutes
+            RSI_LENGTH: 14,
+            RSI_SMA_LENGTH: 11,
+            MACD_FAST: 12,
+            MACD_SLOW: 26,
+            MACD_SIGNAL: 9,
+            STOCH_K_LEN: 14,
+            STOCH_K_SMOOTH: 3,
+            STOCH_D_SMOOTH: 3
+        };
+
+        const APP_STATE = {
+            isScanning: false,
+            abortController: null,
+            selectedTimeframe: '15m', // '15m' | '30m' | '1h' | '2h' | '4h' | 'ALL_TF'
+            candleMode: 'closed',     // 'closed' -> index = length - 2 (148) | 'live' -> index = length - 1 (149)
+            activeTab: 'ALL',         // 'ALL' | 'LONG' | 'SHORT' | 'WATCHLIST'
+            soundEnabled: true,
+            autoRefreshEnabled: false,
+            autoRefreshRemaining: CONFIG.AUTO_REFRESH_SECONDS,
+            autoRefreshIntervalId: null,
+            cacheByTimeframe: {
+                '15m': [],
+                '30m': [],
+                '1h': [],
+                '2h': [],
+                '4h': []
+            },
+            detectedSignals: [],      // Strictly 4/4 conditions met on first crossover candle
+            watchlistSignals: [],     // First-candle RSI/SMA11 crossover + 3/4 conditions met
+            knownSignalKeys: new Set(),
+            totalPerpetualSymbols: 0,
+            excludedByLiquidity: 0
+        };
+
+        /*************************************************************************
+         * 2. WEB AUDIO SYNTHESIZER FOR REAL-TIME SIGNAL ALERTS
+         *************************************************************************/
+        function playAlertSound(type = 'signal') {
+            if (!APP_STATE.soundEnabled && type !== 'test') return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'test') {
+                    APP_STATE.soundEnabled = !APP_STATE.soundEnabled;
+                    const icon = document.getElementById('soundIcon');
+                    if (APP_STATE.soundEnabled) {
+                        icon.className = 'fa-solid fa-volume-high text-amber-400';
+                        showToast('تم تفعيل التنبيه الصوتي للإشارات الجديدة', 'info');
+                    } else {
+                        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                        showToast('تم كتم التنبيه الصوتي', 'info');
+                        return;
+                    }
+                }
+
+                const freqs = type === 'short' ? [587.33, 440.0] : [523.25, 659.25, 783.99];
+                freqs.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+
+                    gain.gain.setValueAtTime(0.001, now + idx * 0.11);
+                    gain.gain.exponentialRampToValueAtTime(0.16, now + idx * 0.11 + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.11 + 0.28);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + idx * 0.11);
+                    osc.stop(now + idx * 0.11 + 0.3);
+                });
+            } catch (e) {
+                console.warn('AudioContext not permitted yet:', e);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let colors = 'bg-slate-900 border-slate-700 text-slate-200';
+            let icon = 'fa-circle-info text-sky-400';
+
+            if (type === 'long') {
+                colors = 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100';
+                icon = 'fa-arrow-trend-up text-emerald-400';
+            } else if (type === 'short') {
+                colors = 'bg-rose-950/95 border-rose-500/50 text-rose-100';
+                icon = 'fa-arrow-trend-down text-rose-400';
+            } else if (type === 'error') {
+                colors = 'bg-rose-950/95 border-rose-500/60 text-rose-200';
+                icon = 'fa-triangle-exclamation text-rose-400';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-md text-xs font-bold transition-all duration-300 ${colors}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base"></i>
+                <span class="flex-1 leading-relaxed">${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-8px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        /*************************************************************************
+         * 3. EXACT QUANTITATIVE MATHEMATICAL INDICATORS ENGINE
+         *************************************************************************/
+
+        /**
+         * Converts standard OHLC candles array into Heikin Ashi candles sequentially.
+         */
+        function computeHeikinAshi(candles) {
+            const ha = new Array(candles.length);
+            for (let k = 0; k < candles.length; k++) {
+                const c = candles[k];
+                const haClose = (c.open + c.high + c.low + c.close) / 4;
+                let haOpen;
+                if (k === 0) {
+                    haOpen = (c.open + c.close) / 2;
+                } else {
+                    haOpen = (ha[k - 1].open + ha[k - 1].close) / 2;
+                }
+                const haHigh = Math.max(c.high, haOpen, haClose);
+                const haLow = Math.min(c.low, haOpen, haClose);
+
+                ha[k] = {
+                    open: haOpen,
+                    high: haHigh,
+                    low: haLow,
+                    close: haClose,
+                    isGreen: haClose > haOpen,
+                    isRed: haClose < haOpen
+                };
+            }
+            return ha;
+        }
+
+        /**
+         * Simple Moving Average (SMA) supporting leading null values.
+         */
+        function computeSMA(series, period) {
+            const result = new Array(series.length).fill(null);
+            for (let k = 0; k < series.length; k++) {
+                if (k < period - 1) continue;
+                let sum = 0;
+                let valid = true;
+                for (let j = 0; j < period; j++) {
+                    const val = series[k - j];
+                    if (val === null || val === undefined || Number.isNaN(val)) {
+                        valid = false;
+                        break;
+                    }
+                    sum += val;
+                }
+                if (valid) {
+                    result[k] = sum / period;
+                }
+            }
+            return result;
+        }
+
+        /**
+         * Exponential Moving Average (EMA) seeded with SMA of first `period` valid entries.
+         */
+        function computeEMA(series, period) {
+            const result = new Array(series.length).fill(null);
+            const kMultiplier = 2 / (period + 1);
+
+            let validCount = 0;
+            let sum = 0;
+            let prevEma = null;
+
+            for (let idx = 0; idx < series.length; idx++) {
+                const val = series[idx];
+                if (val === null || val === undefined || Number.isNaN(val)) {
+                    continue;
+                }
+                validCount++;
+                if (validCount < period) {
+                    sum += val;
+                } else if (validCount === period) {
+                    sum += val;
+                    prevEma = sum / period;
+                    result[idx] = prevEma;
+                } else {
+                    prevEma = (val - prevEma) * kMultiplier + prevEma;
+                    result[idx] = prevEma;
+                }
+            }
+            return result;
+        }
+
+        /**
+         * Standard MACD (12, 26, 9) on Close prices.
+         */
+        function computeMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+            const emaFast = computeEMA(closes, fastPeriod);
+            const emaSlow = computeEMA(closes, slowPeriod);
+
+            const macdLine = new Array(closes.length).fill(null);
+            for (let k = 0; k < closes.length; k++) {
+                if (emaFast[k] !== null && emaSlow[k] !== null) {
+                    macdLine[k] = emaFast[k] - emaSlow[k];
+                }
+            }
+
+            const signalLine = computeEMA(macdLine, signalPeriod);
+            const histogram = new Array(closes.length).fill(null);
+
+            for (let k = 0; k < closes.length; k++) {
+                if (macdLine[k] !== null && signalLine[k] !== null) {
+                    histogram[k] = macdLine[k] - signalLine[k];
+                }
+            }
+
+            return { macdLine, signalLine, histogram };
+        }
+
+        /**
+         * Wilder's RSI (Length = 14) + SMA (Length = 11) applied directly to the RSI(14) output.
+         */
+        function computeRSIWithSMA(closes, rsiLength = 14, smaLength = 11) {
+            const rsi = new Array(closes.length).fill(null);
+            if (closes.length <= rsiLength) {
+                return { rsi, rsiSma: new Array(closes.length).fill(null) };
+            }
+
+            let gainSum = 0;
+            let lossSum = 0;
+
+            for (let k = 1; k <= rsiLength; k++) {
+                const diff = closes[k] - closes[k - 1];
+                if (diff > 0) gainSum += diff;
+                else lossSum += Math.abs(diff);
+            }
+
+            let avgGain = gainSum / rsiLength;
+            let avgLoss = lossSum / rsiLength;
+
+            rsi[rsiLength] = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
+
+            for (let k = rsiLength + 1; k < closes.length; k++) {
+                const diff = closes[k] - closes[k - 1];
+                const gain = diff > 0 ? diff : 0;
+                const loss = diff < 0 ? Math.abs(diff) : 0;
+
+                avgGain = ((avgGain * (rsiLength - 1)) + gain) / rsiLength;
+                avgLoss = ((avgLoss * (rsiLength - 1)) + loss) / rsiLength;
+
+                if (avgLoss === 0) {
+                    rsi[k] = 100;
+                } else {
+                    const rs = avgGain / avgLoss;
+                    rsi[k] = 100 - (100 / (1 + rs));
+                }
+            }
+
+            const rsiSma = computeSMA(rsi, smaLength);
+            return { rsi, rsiSma };
+        }
+
+        /**
+         * Stochastic Oscillator (%K Length = 14, %K Smoothing = 3, %D Smoothing = 3)
+         */
+        function computeStochastic(candles, kLength = 14, kSmooth = 3, dSmooth = 3) {
+            const rawK = new Array(candles.length).fill(null);
+
+            for (let k = kLength - 1; k < candles.length; k++) {
+                let lowestLow = Infinity;
+                let highestHigh = -Infinity;
+
+                for (let j = k - kLength + 1; j <= k; j++) {
+                    if (candles[j].low < lowestLow) lowestLow = candles[j].low;
+                    if (candles[j].high > highestHigh) highestHigh = candles[j].high;
+                }
+
+                const range = highestHigh - lowestLow;
+                if (range === 0) {
+                    rawK[k] = 50;
+                } else {
+                    rawK[k] = ((candles[k].close - lowestLow) / range) * 100;
+                }
+            }
+
+            const stochK = computeSMA(rawK, kSmooth);
+            const stochD = computeSMA(stochK, dSmooth);
+
+            return { rawK, stochK, stochD };
+        }
+
+        /*************************************************************************
+         * 4. STRATEGY EVALUATION AT TARGET CANDLE INDEX (i)
+         *************************************************************************/
+        function evaluateSymbolAtCandle(item, candleMode) {
+            const { candles, ha, macd, rsiData, stoch, timeframe } = item;
+            const i = candleMode === 'live' ? candles.length - 1 : candles.length - 2;
+            const prev = i - 1;
+
+            if (prev < 0) return null;
+
+            const rsiCurr = rsiData.rsi[i];
+            const rsiPrev = rsiData.rsi[prev];
+            const smaCurr = rsiData.rsiSma[i];
+            const smaPrev = rsiData.rsiSma[prev];
+
+            const macdCurr = macd.macdLine[i];
+            const sigCurr = macd.signalLine[i];
+            const histCurr = macd.histogram[i];
+
+            const kCurr = stoch.stochK[i];
+            const dCurr = stoch.stochD[i];
+            const kPrev = stoch.stochK[prev];
+            const dPrev = stoch.stochD[prev];
+
+            const haCurr = ha[i];
+            const haPrev = ha[prev];
+
+            if (
+                rsiCurr === null || rsiPrev === null ||
+                smaCurr === null || smaPrev === null ||
+                macdCurr === null || sigCurr === null ||
+                kCurr === null || dCurr === null || kPrev === null
+            ) {
+                return null;
+            }
+
+            // ===================================================================
+            // STRICT FIRST CANDLE CROSSOVER TRIGGER: RSI(14) vs SMA(11)
+            // ===================================================================
+            const rsiCrossUpFirstCandle = (rsiPrev <= smaPrev) && (rsiCurr > smaCurr);
+            const rsiCrossDownFirstCandle = (rsiPrev >= smaPrev) && (rsiCurr < smaCurr);
+
+            // Condition checks for LONG:
+            const macdBullish = macdCurr > sigCurr;
+            const stochBullish = (kCurr > dCurr) && (kCurr > kPrev);
+            const haBullish = haCurr.close > haCurr.open;
+
+            // Condition checks for SHORT:
+            const macdBearish = macdCurr < sigCurr;
+            const stochBearish = (kCurr < dCurr) && (kCurr < kPrev);
+            const haBearish = haCurr.close < haCurr.open;
+
+            // Strict 4/4 Long Signal
+            const isStrictLong = rsiCrossUpFirstCandle && macdBullish && stochBullish && haBullish;
+            // Strict 4/4 Short Signal
+            const isStrictShort = rsiCrossDownFirstCandle && macdBearish && stochBearish && haBearish;
+
+            let longScore = 0;
+            if (rsiCrossUpFirstCandle) {
+                longScore = 1 + (macdBullish ? 1 : 0) + (stochBullish ? 1 : 0) + (haBullish ? 1 : 0);
+            }
+            let shortScore = 0;
+            if (rsiCrossDownFirstCandle) {
+                shortScore = 1 + (macdBearish ? 1 : 0) + (stochBearish ? 1 : 0) + (haBearish ? 1 : 0);
+            }
+
+            let signalType = null;
+            let isWatchlist = false;
+
+            if (isStrictLong) {
+                signalType = 'LONG';
+            } else if (isStrictShort) {
+                signalType = 'SHORT';
+            } else if (longScore === 3) {
+                signalType = 'LONG_WATCH';
+                isWatchlist = true;
+            } else if (shortScore === 3) {
+                signalType = 'SHORT_WATCH';
+                isWatchlist = true;
+            }
+
+            return {
+                idKey: `${item.symbol}_${timeframe}`,
+                symbol: item.symbol,
+                timeframe,
+                lastPrice: item.lastPrice,
+                priceChangePercent: item.priceChangePercent,
+                quoteVolume: item.quoteVolume,
+                targetIndex: i,
+                targetCandleTime: candles[i].openTime,
+                targetCandleCloseTime: candles[i].closeTime,
+                signalType,
+                isWatchlist,
+                longScore,
+                shortScore,
+                conditions: {
+                    rsiCrossUpFirstCandle,
+                    rsiCrossDownFirstCandle,
+                    macdBullish,
+                    macdBearish,
+                    stochBullish,
+                    stochBearish,
+                    haBullish,
+                    haBearish
+                },
+                metrics: {
+                    rsiCurr,
+                    rsiPrev,
+                    smaCurr,
+                    smaPrev,
+                    rsiDiff: rsiCurr - smaCurr,
+                    macdCurr,
+                    sigCurr,
+                    histCurr,
+                    kCurr,
+                    dCurr,
+                    kPrev,
+                    dPrev,
+                    haOpen: haCurr.open,
+                    haClose: haCurr.close,
+                    haHigh: haCurr.high,
+                    haLow: haCurr.low,
+                    haPrevOpen: haPrev.open,
+                    haPrevClose: haPrev.close
+                }
+            };
+        }
+
+        /*************************************************************************
+         * 5. BINANCE FUTURES API FETCHING & BATCH RATE LIMIT MANAGER
+         *************************************************************************/
+        async function fetchExchangePerpetualSymbols(signal) {
+            const [exchangeRes, tickerRes] = await Promise.all([
+                fetch(`${CONFIG.BASE_URL}/fapi/v1/exchangeInfo`, { signal }),
+                fetch(`${CONFIG.BASE_URL}/fapi/v1/ticker/24hr`, { signal })
+            ]);
+
+            if (!exchangeRes.ok || !tickerRes.ok) {
+                throw new Error(`فشل الاتصال بواجهة باينانس (HTTP ${exchangeRes.status})`);
+            }
+
+            const exchangeData = await exchangeRes.json();
+            const tickersData = await tickerRes.json();
+
+            const tickerMap = new Map();
+            for (const t of tickersData) {
+                tickerMap.set(t.symbol, {
+                    lastPrice: parseFloat(t.lastPrice),
+                    priceChangePercent: parseFloat(t.priceChangePercent),
+                    quoteVolume: parseFloat(t.quoteVolume)
+                });
+            }
+
+            const perpetuals = [];
+            for (const s of exchangeData.symbols) {
+                if (
+                    s.contractType === 'PERPETUAL' &&
+                    s.quoteAsset === 'USDT' &&
+                    s.status === 'TRADING'
+                ) {
+                    const ticker = tickerMap.get(s.symbol) || {
+                        lastPrice: 0,
+                        priceChangePercent: 0,
+                        quoteVolume: 0
+                    };
+                    perpetuals.push({
+                        symbol: s.symbol,
+                        ...ticker
+                    });
+                }
+            }
+
+            return perpetuals;
+        }
+
+        async function fetchSymbolKlinesAndCompute(symbolObj, timeframe, signal) {
+            const url = `${CONFIG.BASE_URL}/fapi/v1/klines?symbol=${symbolObj.symbol}&interval=${timeframe}&limit=${CONFIG.KLINES_LIMIT}`;
+            const response = await fetch(url, { signal });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} for ${symbolObj.symbol} (${timeframe})`);
+            }
+            const rawKlines = await response.json();
+            if (!Array.isArray(rawKlines) || rawKlines.length < 50) {
+                return null;
+            }
+
+            const candles = rawKlines.map(k => ({
+                openTime: Number(k[0]),
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+                volume: parseFloat(k[5]),
+                closeTime: Number(k[6])
+            }));
+
+            const closes = candles.map(c => c.close);
+            const ha = computeHeikinAshi(candles);
+            const macd = computeMACD(closes, CONFIG.MACD_FAST, CONFIG.MACD_SLOW, CONFIG.MACD_SIGNAL);
+            const rsiData = computeRSIWithSMA(closes, CONFIG.RSI_LENGTH, CONFIG.RSI_SMA_LENGTH);
+            const stoch = computeStochastic(candles, CONFIG.STOCH_K_LEN, CONFIG.STOCH_K_SMOOTH, CONFIG.STOCH_D_SMOOTH);
+
+            return {
+                symbol: symbolObj.symbol,
+                timeframe,
+                lastPrice: symbolObj.lastPrice || candles[candles.length - 1].close,
+                priceChangePercent: symbolObj.priceChangePercent || 0,
+                quoteVolume: symbolObj.quoteVolume || 0,
+                candles,
+                ha,
+                macd,
+                rsiData,
+                stoch
+            };
+        }
+
+        async function startFullScan() {
+            if (APP_STATE.isScanning) return;
+
+            APP_STATE.isScanning = true;
+            APP_STATE.abortController = new AbortController();
+            const signal = APP_STATE.abortController.signal;
+
+            const startBtn = document.getElementById('startScanBtn');
+            const stopBtn = document.getElementById('stopScanBtn');
+            const scanIcon = document.getElementById('scanBtnIcon');
+            const scanText = document.getElementById('scanBtnText');
+
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-70');
+            stopBtn.disabled = false;
+            scanIcon.className = 'fa-solid fa-circle-notch fa-spin';
+            scanText.textContent = 'جاري الفحص الكمي...';
+
+            const targetTimeframes = APP_STATE.selectedTimeframe === 'ALL_TF'
+                ? SUPPORTED_TIMEFRAMES
+                : [APP_STATE.selectedTimeframe];
+
+            updateProgressUI(0, 0, 'جاري جلب قائمة عقود USDT الدائمة وسيولة 24 ساعة من باينانس...');
+
+            try {
+                const allPerpetuals = await fetchExchangePerpetualSymbols(signal);
+                APP_STATE.totalPerpetualSymbols = allPerpetuals.length;
+
+                const useLiquidityFilter = document.getElementById('liquidityToggle').checked;
+                const minVolume = parseFloat(document.getElementById('liquidityThresholdSelect').value) || 0;
+
+                const filteredSymbols = allPerpetuals.filter(item => {
+                    if (!useLiquidityFilter) return true;
+                    return item.quoteVolume >= minVolume;
+                });
+
+                filteredSymbols.sort((a, b) => b.quoteVolume - a.quoteVolume);
+
+                APP_STATE.excludedByLiquidity = allPerpetuals.length - filteredSymbols.length;
+                document.getElementById('kpiTotalSymbols').textContent = filteredSymbols.length;
+                document.getElementById('kpiExcludedLiquidity').innerHTML = `مستبعد بالسيولة: <span class="font-mono-num">${APP_STATE.excludedByLiquidity}</span>`;
+
+                // Clear cache for target timeframes being scanned
+                for (const tf of targetTimeframes) {
+                    APP_STATE.cacheByTimeframe[tf] = [];
+                }
+
+                const totalOperations = filteredSymbols.length * targetTimeframes.length;
+                let completedOperations = 0;
+
+                for (const tf of targetTimeframes) {
+                    if (signal.aborted) break;
+
+                    const tfLabel = TIMEFRAMES_MAP[tf].label;
+
+                    for (let b = 0; b < filteredSymbols.length; b += CONFIG.BATCH_SIZE) {
+                        if (signal.aborted) break;
+
+                        const batch = filteredSymbols.slice(b, b + CONFIG.BATCH_SIZE);
+                        const batchNumber = Math.floor(b / CONFIG.BATCH_SIZE) + 1;
+                        const totalBatches = Math.ceil(filteredSymbols.length / CONFIG.BATCH_SIZE);
+
+                        updateProgressUI(
+                            completedOperations,
+                            totalOperations,
+                            `فريم [${tf} - ${tfLabel}] • الدفعة (${batchNumber}/${totalBatches}) — حساب Heikin Ashi و RSI/SMA11 و MACD و Stochastic...`
+                        );
+
+                        const results = await Promise.allSettled(
+                            batch.map(sym => fetchSymbolKlinesAndCompute(sym, tf, signal))
+                        );
+
+                        for (const res of results) {
+                            if (res.status === 'fulfilled' && res.value) {
+                                APP_STATE.cacheByTimeframe[tf].push(res.value);
+                            }
+                        }
+
+                        completedOperations = Math.min(completedOperations + batch.length, totalOperations);
+                        updateProgressUI(completedOperations, totalOperations);
+
+                        recomputeSignalsFromCache(false);
+
+                        if (b + CONFIG.BATCH_SIZE < filteredSymbols.length && !signal.aborted) {
+                            await new Promise(r => setTimeout(r, CONFIG.BATCH_DELAY_MS));
+                        }
+                    }
+                }
+
+                if (!signal.aborted) {
+                    const finalNewSignals = recomputeSignalsFromCache(true);
+                    const nowStr = new Date().toLocaleTimeString('ar-EG', { hour12: false });
+                    document.getElementById('kpiLastUpdateTime').textContent = nowStr;
+
+                    const tfSummaryText = APP_STATE.selectedTimeframe === 'ALL_TF'
+                        ? 'جميع الفريمات (15m, 30m, 1h, 2h, 4h)'
+                        : `فريم ${APP_STATE.selectedTimeframe}`;
+
+                    updateProgressUI(
+                        totalOperations,
+                        totalOperations,
+                        `اكتمل الفحص بنجاح على ${tfSummaryText} — تم رصد ${APP_STATE.detectedSignals.length} إشارة مؤكدة في أول شمعة تقاطع.`
+                    );
+
+                    setApiStatus('online', 'متصل بـ Binance FAPI');
+
+                    if (finalNewSignals > 0) {
+                        const firstSig = APP_STATE.detectedSignals[0];
+                        playAlertSound(firstSig.signalType === 'SHORT' ? 'short' : 'long');
+                        showToast(
+                            `تم اكتشاف ${finalNewSignals} إشارة جديدة في أول شمعة تقاطع (${tfSummaryText})!`,
+                            firstSig.signalType === 'SHORT' ? 'short' : 'long'
+                        );
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    updateProgressUI(
+                        0,
+                        APP_STATE.totalPerpetualSymbols,
+                        'تم إيقاف الفحص يدوياً من قبل المستخدم.'
+                    );
+                    showToast('تم إيقاف عملية الفحص الحالية.', 'info');
+                } else {
+                    console.error('Scan Error:', err);
+                    setApiStatus('error', 'خطأ في الاتصال بـ Binance');
+                    showToast(`تعذر جلب البيانات: ${err.message}`, 'error');
+                }
+            } finally {
+                APP_STATE.isScanning = false;
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-70');
+                stopBtn.disabled = true;
+                scanIcon.className = 'fa-solid fa-radar';
+                scanText.textContent = 'تحديث الفحص الآن';
+            }
+        }
+
+        function stopActiveScan() {
+            if (APP_STATE.isScanning && APP_STATE.abortController) {
+                APP_STATE.abortController.abort();
+            }
+        }
+
+        function setApiStatus(state, text) {
+            const dot = document.getElementById('apiStatusDot');
+            const label = document.getElementById('apiStatusText');
+            label.textContent = text;
+            if (state === 'online') {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+            } else {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+            }
+        }
+
+        function updateProgressUI(scanned, total, labelText) {
+            const pct = total > 0 ? Math.round((scanned / total) * 100) : 0;
+            document.getElementById('scannedCountText').textContent = `${scanned} / ${total}`;
+            document.getElementById('progressPercentText').textContent = `${pct}%`;
+            document.getElementById('scanProgressBar').style.width = `${pct}%`;
+            if (labelText) {
+                document.getElementById('scanProgressLabel').textContent = labelText;
+            }
+        }
+
+        /*************************************************************************
+         * 6. RE-EVALUATING CACHED KLINES WHEN TOGGLING TIMEFRAME OR CANDLE MODE
+         *************************************************************************/
+        function getActiveCachedItems() {
+            if (APP_STATE.selectedTimeframe === 'ALL_TF') {
+                return [
+                    ...APP_STATE.cacheByTimeframe['15m'],
+                    ...APP_STATE.cacheByTimeframe['30m'],
+                    ...APP_STATE.cacheByTimeframe['1h'],
+                    ...APP_STATE.cacheByTimeframe['2h'],
+                    ...APP_STATE.cacheByTimeframe['4h']
+                ];
+            }
+            return APP_STATE.cacheByTimeframe[APP_STATE.selectedTimeframe] || [];
+        }
+
+        function recomputeSignalsFromCache(checkNewAlerts = false) {
+            const strictSignals = [];
+            const watchlist = [];
+            let newlyFoundCount = 0;
+
+            const activeItems = getActiveCachedItems();
+
+            for (const item of activeItems) {
+                const evaluation = evaluateSymbolAtCandle(item, APP_STATE.candleMode);
+                if (!evaluation) continue;
+
+                if (evaluation.signalType === 'LONG' || evaluation.signalType === 'SHORT') {
+                    strictSignals.push(evaluation);
+                    const uniqueKey = `${evaluation.symbol}_${evaluation.timeframe}_${evaluation.signalType}_${evaluation.targetCandleTime}_${APP_STATE.candleMode}`;
+                    if (checkNewAlerts && !APP_STATE.knownSignalKeys.has(uniqueKey)) {
+                        APP_STATE.knownSignalKeys.add(uniqueKey);
+                        newlyFoundCount++;
+                    }
+                } else if (evaluation.isWatchlist) {
+                    watchlist.push(evaluation);
+                }
+            }
+
+            APP_STATE.detectedSignals = strictSignals;
+            APP_STATE.watchlistSignals = watchlist;
+
+            updateSummaryCounts(activeItems);
+            renderSignalsTable();
+
+            return newlyFoundCount;
+        }
+
+        function updateSummaryCounts(activeItems) {
+            const longCount = APP_STATE.detectedSignals.filter(s => s.signalType === 'LONG').length;
+            const shortCount = APP_STATE.detectedSignals.filter(s => s.signalType === 'SHORT').length;
+            const totalStrict = APP_STATE.detectedSignals.length;
+            const watchCount = APP_STATE.watchlistSignals.length;
+
+            document.getElementById('kpiLongSignals').textContent = longCount;
+            document.getElementById('kpiShortSignals').textContent = shortCount;
+            document.getElementById('kpiWatchlistSignals').textContent = watchCount;
+
+            document.getElementById('tabCountAll').textContent = totalStrict;
+            document.getElementById('tabCountLong').textContent = longCount;
+            document.getElementById('tabCountShort').textContent = shortCount;
+            document.getElementById('tabCountWatchlist').textContent = watchCount;
+
+            const modeTitle = APP_STATE.candleMode === 'live' ? 'الشمعة الحية' : 'آخر شمعة مغلقة';
+            const tfTitle = APP_STATE.selectedTimeframe === 'ALL_TF' ? 'Multi-TF (15m-4h)' : APP_STATE.selectedTimeframe;
+
+            if (activeItems && activeItems.length > 0) {
+                const sample = activeItems[0];
+                const idx = APP_STATE.candleMode === 'live' ? sample.candles.length - 1 : sample.candles.length - 2;
+                const candleOpenDate = new Date(sample.candles[idx].openTime);
+                const formattedCandle = candleOpenDate.toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+                document.getElementById('kpiCandleTimeInfo').textContent = `${tfTitle} • ${modeTitle}`;
+                document.getElementById('candleTimestampFooter').textContent = `Active TF: ${tfTitle} | Target Candle [${idx}]: ${formattedCandle}`;
+            } else {
+                document.getElementById('kpiCandleTimeInfo').textContent = `الفريم النشط: ${tfTitle} (${modeTitle})`;
+            }
+        }
+
+        /*************************************************************************
+         * 7. INTERACTIVE CONTROLS (TIMEFRAME, CANDLE MODE, FILTER TABS, AUTO-REFRESH)
+         *************************************************************************/
+        function selectTimeframe(tf) {
+            if (APP_STATE.isScanning) {
+                stopActiveScan();
+            }
+
+            APP_STATE.selectedTimeframe = tf;
+
+            // Update timeframe buttons styling
+            const allButtons = ['15m', '30m', '1h', '2h', '4h', 'ALL_TF'];
+            allButtons.forEach(key => {
+                const btn = document.getElementById(`tfBtn_${key}`);
+                if (!btn) return;
+                if (key === tf) {
+                    if (key === 'ALL_TF') {
+                        btn.className = 'tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-sky-500 text-slate-950 shadow';
+                    } else {
+                        btn.className = 'tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                    }
+                } else {
+                    if (key === 'ALL_TF') {
+                        btn.className = 'tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-sky-400 hover:bg-slate-800 border border-sky-500/20';
+                    } else {
+                        btn.className = 'tf-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800';
+                    }
+                }
+            });
+
+            // If we already have cached data for this timeframe, display it immediately; otherwise start scanning!
+            const cached = getActiveCachedItems();
+            if (tf !== 'ALL_TF' && cached.length > 0) {
+                recomputeSignalsFromCache(false);
+                showToast(`تم التبديل الفوري إلى فريم ${tf} (${TIMEFRAMES_MAP[tf].label}) من الذاكرة المؤقتة — اضغط "تحديث الفحص الآن" لجلب بيانات جديدة.`, 'info');
+            } else {
+                startFullScan();
+            }
+        }
+
+        function setCandleMode(mode) {
+            APP_STATE.candleMode = mode;
+            const closedBtn = document.getElementById('candleModeClosedBtn');
+            const liveBtn = document.getElementById('candleModeLiveBtn');
+
+            if (mode === 'closed') {
+                closedBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                liveBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200';
+            } else {
+                liveBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow';
+                closedBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200';
+            }
+
+            const activeItems = getActiveCachedItems();
+            if (activeItems.length > 0) {
+                recomputeSignalsFromCache(false);
+                showToast(
+                    mode === 'closed'
+                        ? 'تم التبديل إلى فحص آخر شمعة مغلقة ومؤكدة (Index = 148)'
+                        : 'تم التبديل إلى فحص الشمعة الحية الحالية (Index = 149)',
+                    'info'
+                );
+            }
+        }
+
+        function setSignalFilter(tab) {
+            APP_STATE.activeTab = tab;
+
+            const tabs = {
+                ALL: document.getElementById('tabAll'),
+                LONG: document.getElementById('tabLong'),
+                SHORT: document.getElementById('tabShort'),
+                WATCHLIST: document.getElementById('tabWatchlist')
+            };
+
+            Object.keys(tabs).forEach(key => {
+                if (key === tab) {
+                    if (key === 'LONG') {
+                        tabs[key].className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-slate-950 shadow';
+                    } else if (key === 'SHORT') {
+                        tabs[key].className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-rose-500 text-white shadow';
+                    } else {
+                        tabs[key].className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-amber-500 text-slate-950 shadow';
+                    }
+                } else {
+                    const textColor = key === 'LONG' ? 'text-emerald-400' : key === 'SHORT' ? 'text-rose-400' : key === 'WATCHLIST' ? 'text-amber-400' : 'text-slate-300';
+                    tabs[key].className = `px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${textColor} hover:bg-slate-800`;
+                }
+            });
+
+            renderSignalsTable();
+        }
+
+        function onSettingsChanged() {
+            if (!APP_STATE.isScanning) {
+                startFullScan();
+            }
+        }
+
+        function toggleAutoRefresh() {
+            const enabled = document.getElementById('autoRefreshToggle').checked;
+            APP_STATE.autoRefreshEnabled = enabled;
+            const statusText = document.getElementById('autoRefreshStatusText');
+            const timerDisplay = document.getElementById('countdownTimerDisplay');
+
+            if (APP_STATE.autoRefreshIntervalId) {
+                clearInterval(APP_STATE.autoRefreshIntervalId);
+                APP_STATE.autoRefreshIntervalId = null;
+            }
+
+            if (enabled) {
+                APP_STATE.autoRefreshRemaining = CONFIG.AUTO_REFRESH_SECONDS;
+                statusText.textContent = 'يعمل كل 5 دقائق تلقائياً';
+                statusText.className = 'text-[11px] text-sky-400 font-semibold';
+
+                APP_STATE.autoRefreshIntervalId = setInterval(() => {
+                    if (APP_STATE.isScanning) return;
+                    APP_STATE.autoRefreshRemaining--;
+
+                    const mins = String(Math.floor(APP_STATE.autoRefreshRemaining / 60)).padStart(2, '0');
+                    const secs = String(APP_STATE.autoRefreshRemaining % 60).padStart(2, '0');
+                    timerDisplay.textContent = `${mins}:${secs}`;
+
+                    if (APP_STATE.autoRefreshRemaining <= 0) {
+                        APP_STATE.autoRefreshRemaining = CONFIG.AUTO_REFRESH_SECONDS;
+                        startFullScan();
+                    }
+                }, 1000);
+
+                showToast('تم تفعيل التحديث التلقائي الدوري كل 5 دقائق', 'info');
+            } else {
+                statusText.textContent = 'متوقف حالياً';
+                statusText.className = 'text-[11px] text-slate-400';
+                timerDisplay.textContent = '05:00';
+                showToast('تم إيقاف التحديث التلقائي', 'info');
+            }
+        }
+
+        /*************************************************************************
+         * 8. TABLE RENDERING & FORMATTING HELPERS
+         *************************************************************************/
+        function formatPrice(price) {
+            if (price >= 1000) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (price >= 1) return price.toFixed(4);
+            if (price >= 0.01) return price.toFixed(5);
+            return price.toFixed(7);
+        }
+
+        function formatUSDTVolume(vol) {
+            if (vol >= 1e9) return (vol / 1e9).toFixed(2) + 'B USDT';
+            if (vol >= 1e6) return (vol / 1e6).toFixed(2) + 'M USDT';
+            if (vol >= 1e3) return (vol / 1e3).toFixed(1) + 'K USDT';
+            return vol.toFixed(0) + ' USDT';
+        }
+
+        function renderSignalsTable() {
+            const tbody = document.getElementById('signalsTableBody');
+            const emptyState = document.getElementById('emptyStateContainer');
+            const searchQuery = (document.getElementById('symbolSearchInput').value || '').trim().toUpperCase();
+            const sortBy = document.getElementById('sortSelect').value;
+
+            let sourceList = [];
+            if (APP_STATE.activeTab === 'ALL') {
+                sourceList = [...APP_STATE.detectedSignals];
+            } else if (APP_STATE.activeTab === 'LONG') {
+                sourceList = APP_STATE.detectedSignals.filter(s => s.signalType === 'LONG');
+            } else if (APP_STATE.activeTab === 'SHORT') {
+                sourceList = APP_STATE.detectedSignals.filter(s => s.signalType === 'SHORT');
+            } else if (APP_STATE.activeTab === 'WATCHLIST') {
+                sourceList = [...APP_STATE.watchlistSignals];
+            }
+
+            if (searchQuery) {
+                sourceList = sourceList.filter(item => item.symbol.includes(searchQuery));
+            }
+
+            sourceList.sort((a, b) => {
+                if (sortBy === 'volume_desc') return b.quoteVolume - a.quoteVolume;
+                if (sortBy === 'rsi_diff_desc') return Math.abs(b.metrics.rsiDiff) - Math.abs(a.metrics.rsiDiff);
+                if (sortBy === 'change_desc') return Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent);
+                if (sortBy === 'tf_asc') return TIMEFRAMES_MAP[a.timeframe].order - TIMEFRAMES_MAP[b.timeframe].order;
+                if (sortBy === 'symbol_asc') return a.symbol.localeCompare(b.symbol);
+                return 0;
+            });
+
+            const activeCachedCount = getActiveCachedItems().length;
+
+            if (sourceList.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+
+                const titleEl = document.getElementById('emptyStateTitle');
+                const subEl = document.getElementById('emptyStateSubtitle');
+                const iconWrap = document.getElementById('emptyStateIconWrap');
+
+                if (APP_STATE.isScanning) {
+                    iconWrap.innerHTML = '<i class="fa-solid fa-radar fa-spin text-amber-400"></i>';
+                    titleEl.textContent = 'جاري الفحص المتوازي لعقود باينانس الآجلة...';
+                    subEl.textContent = 'سيتم إظهار أي عملة تحقق شروط أول شمعة تقاطع فوراً أثناء الفحص.';
+                } else if (activeCachedCount > 0) {
+                    iconWrap.innerHTML = '<i class="fa-solid fa-filter-circle-xmark text-slate-400"></i>';
+                    if (APP_STATE.activeTab === 'WATCHLIST') {
+                        titleEl.textContent = 'لا توجد عملات في رادار المراقبة (3/4 شروط) على هذا الفريم حالياً';
+                        subEl.textContent = 'جرب التبديل بين الفريمات (15m / 30m / 1h / 2h / 4h) أو بين "آخر شمعة مغلقة" و"الشمعة الحية".';
+                    } else {
+                        const watchLen = APP_STATE.watchlistSignals.length;
+                        titleEl.textContent = 'لا توجد عملات حققت الشروط الـ 4 كاملة في أول شمعة تقاطع على هذا الفريم حالياً';
+                        subEl.innerHTML = watchLen > 0
+                            ? `تم فحص السوق بالكامل بدقة. يوجد حالياً <button onclick="setSignalFilter('WATCHLIST')" class="text-amber-400 underline font-bold">${watchLen} عملة في رادار تقاطع RSI (3/4 شروط)</button> يمكنك استعراضها أو التبديل إلى فريم آخر.`
+                            : 'يمكنك الانتقال لفريم آخر (15m, 30m, 1h, 2h, 4h) أو الضغط على "جميع الفريمات (Multi-TF)" لفحص كل الفريمات معاً.';
+                    }
+                }
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = sourceList.map(item => {
+                const isLong = item.signalType === 'LONG' || item.signalType === 'LONG_WATCH';
+                const m = item.metrics;
+                const c = item.conditions;
+                const tfMeta = TIMEFRAMES_MAP[item.timeframe];
+
+                const rowClass = isLong ? 'signal-row-long' : 'signal-row-short';
+                const changeColor = item.priceChangePercent >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                const changeSign = item.priceChangePercent >= 0 ? '+' : '';
+
+                // Signal Badge
+                let badgeHtml = '';
+                if (item.signalType === 'LONG') {
+                    badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            شراء LONG (4/4)
+                        </span>
+                    `;
+                } else if (item.signalType === 'SHORT') {
+                    badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm">
+                            <i class="fa-solid fa-arrow-trend-down"></i>
+                            بيع SHORT (4/4)
+                        </span>
+                    `;
+                } else if (item.signalType === 'LONG_WATCH') {
+                    badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            <i class="fa-solid fa-eye"></i>
+                            مراقبة صعود (3/4)
+                        </span>
+                    `;
+                } else {
+                    badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-rose-300 border border-amber-500/40">
+                            <i class="fa-solid fa-eye"></i>
+                            مراقبة هبوط (3/4)
+                        </span>
+                    `;
+                }
+
+                // MACD Status Pill
+                const macdOk = isLong ? c.macdBullish : c.macdBearish;
+                const macdStatusHtml = `
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid ${macdOk ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-rose-400'} text-xs"></i>
+                            <span class="text-xs font-bold ${c.macdBullish ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${c.macdBullish ? 'إيجابي صاعد (MACD > Signal)' : 'سلبي هابط (MACD < Signal)'}
+                            </span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 font-mono-num mt-0.5">
+                            M: ${m.macdCurr.toFixed(4)} | S: ${m.sigCurr.toFixed(4)}
+                        </span>
+                    </div>
+                `;
+
+                // Stochastic Status Pill
+                const stochOk = isLong ? c.stochBullish : c.stochBearish;
+                const kSlopeUp = m.kCurr > m.kPrev;
+                const stochHtml = `
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid ${stochOk ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-rose-400'} text-xs"></i>
+                            <span class="font-mono-num text-xs font-bold text-white">
+                                %K: ${m.kCurr.toFixed(1)} | %D: ${m.dCurr.toFixed(1)}
+                            </span>
+                        </div>
+                        <span class="text-[11px] ${kSlopeUp ? 'text-emerald-400' : 'text-rose-400'} mt-0.5">
+                            ${kSlopeUp ? '↑ ميل %K صاعد' : '↓ ميل %K هابط'} (السابق: <span class="font-mono-num">${m.kPrev.toFixed(1)}</span>)
+                        </span>
+                    </div>
+                `;
+
+                // Heikin Ashi Status Pill
+                const haOk = isLong ? c.haBullish : c.haBearish;
+                const haHtml = c.haBullish
+                    ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                           <span class="w-2 h-2 rounded-sm bg-emerald-400"></span>شمعة خضراء ${haOk ? '✓' : ''}
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold">
+                           <span class="w-2 h-2 rounded-sm bg-rose-400"></span>شمعة حمراء ${haOk ? '✓' : ''}
+                       </span>`;
+
+                const tvUrl = `https://www.tradingview.com/chart/?symbol=BINANCE:${item.symbol}.P&interval=${tfMeta.tvInterval}`;
+                const binanceUrl = `https://www.binance.com/en/futures/${item.symbol}`;
+
+                return `
+                    <tr class="transition ${rowClass}">
+                        <!-- Symbol & External Chart Links -->
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center gap-2.5">
+                                <div>
+                                    <div class="font-mono-num font-extrabold text-white text-sm tracking-wide flex items-center gap-1.5">
+                                        <span>${item.symbol}</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 font-semibold">PERP</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <a href="${tvUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20 transition">
+                                            <i class="fa-solid fa-chart-line text-[10px]"></i>
+                                            <span>TradingView (${item.timeframe})</span>
+                                        </a>
+                                        <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 transition">
+                                            <i class="fa-solid fa-coins text-[10px]"></i>
+                                            <span>Binance</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Timeframe Pill -->
+                        <td class="py-3.5 px-3 text-center">
+                            <span class="inline-flex flex-col items-center px-2.5 py-1 rounded-lg border text-xs font-mono-num font-extrabold ${tfMeta.badgeColor}">
+                                <span>${item.timeframe}</span>
+                                <span class="text-[10px] font-sans font-normal opacity-80">${tfMeta.label}</span>
+                            </span>
+                        </td>
+
+                        <!-- Signal Badge -->
+                        <td class="py-3.5 px-4 text-center">
+                            ${badgeHtml}
+                        </td>
+
+                        <!-- Price & 24h Change -->
+                        <td class="py-3.5 px-4">
+                            <div class="font-mono-num font-bold text-white text-sm">$${formatPrice(item.lastPrice)}</div>
+                            <div class="font-mono-num text-xs font-semibold ${changeColor}">${changeSign}${item.priceChangePercent.toFixed(2)}%</div>
+                        </td>
+
+                        <!-- First Candle RSI(14) / SMA(11) Crossover Proof -->
+                        <td class="py-3.5 px-4">
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono-num text-xs font-extrabold ${isLong ? 'text-emerald-400' : 'text-rose-400'}">
+                                        RSI: ${m.rsiCurr.toFixed(2)}
+                                    </span>
+                                    <span class="text-slate-500">/</span>
+                                    <span class="font-mono-num text-xs font-bold text-amber-400">
+                                        SMA11: ${m.smaCurr.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5 font-mono-num">
+                                    [i-1]: RSI ${m.rsiPrev.toFixed(1)} ${isLong ? '&le;' : '&ge;'} SMA ${m.smaPrev.toFixed(1)} ✓
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- MACD (12, 26, 9) -->
+                        <td class="py-3.5 px-4">
+                            ${macdStatusHtml}
+                        </td>
+
+                        <!-- Stochastic (14, 3, 3) -->
+                        <td class="py-3.5 px-4">
+                            ${stochHtml}
+                        </td>
+
+                        <!-- Heikin Ashi Candle Status -->
+                        <td class="py-3.5 px-4 text-center">
+                            ${haHtml}
+                        </td>
+
+                        <!-- 24h Liquidity Volume -->
+                        <td class="py-3.5 px-4">
+                            <div class="font-mono-num text-xs font-bold text-slate-200">${formatUSDTVolume(item.quoteVolume)}</div>
+                            <div class="text-[10px] text-slate-500 mt-0.5">حجم تداول 24 ساعة</div>
+                        </td>
+
+                        <!-- Inspector Button -->
+                        <td class="py-3.5 px-4 text-center">
+                            <button onclick="openInspectorModal('${item.idKey}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition">
+                                <i class="fa-solid fa-magnifying-glass-chart ml-1 text-amber-400"></i>
+                                فحص الشمعة
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /*************************************************************************
+         * 9. INSPECTOR MODAL & CSV EXPORT
+         *************************************************************************/
+        function openInspectorModal(idKey) {
+            const allItems = [...APP_STATE.detectedSignals, ...APP_STATE.watchlistSignals];
+            const item = allItems.find(x => x.idKey === idKey);
+            if (!item) return;
+
+            const isLong = item.signalType === 'LONG' || item.signalType === 'LONG_WATCH';
+            const m = item.metrics;
+            const c = item.conditions;
+            const tfMeta = TIMEFRAMES_MAP[item.timeframe];
+
+            document.getElementById('modalSymbolTitle').textContent = item.symbol;
+            document.getElementById('modalTimeframeBadge').textContent = `${item.timeframe} (${tfMeta.label})`;
+
+            const badge = document.getElementById('modalSignalBadge');
+            badge.textContent = isLong ? 'LONG SIGNAL' : 'SHORT SIGNAL';
+            badge.className = isLong
+                ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+
+            const body = document.getElementById('inspectorModalBody');
+            body.innerHTML = `
+                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <span class="text-slate-400">السعر الحالي:</span>
+                        <strong class="font-mono-num text-white text-sm mr-1">$${formatPrice(item.lastPrice)}</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400">الإطار الزمني:</span>
+                        <strong class="font-mono-num text-amber-400 text-sm mr-1">${item.timeframe} (${tfMeta.label})</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400">سيولة 24 ساعة:</span>
+                        <strong class="font-mono-num text-emerald-400 text-sm mr-1">${formatUSDTVolume(item.quoteVolume)}</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400">الشمعة المستهدفة:</span>
+                        <strong class="font-mono-num text-sky-400 mr-1">Index [${item.targetIndex}]</strong>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- 1. RSI & SMA 11 First Crossover Proof -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white">1. تقاطع RSI(14) مع SMA(11)</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> أول شمعة</span>
+                        </div>
+                        <div class="text-slate-400 font-mono-num text-[11px]">
+                            الشمعة السابقة [i-1]: RSI (${m.rsiPrev.toFixed(2)}) ${isLong ? '&le;' : '&ge;'} SMA11 (${m.smaPrev.toFixed(2)})
+                        </div>
+                        <div class="text-white font-mono-num text-xs font-bold">
+                            الشمعة الحالية [i]: RSI (${m.rsiCurr.toFixed(2)}) ${isLong ? '&gt;' : '&lt;'} SMA11 (${m.smaCurr.toFixed(2)})
+                        </div>
+                    </div>
+
+                    <!-- 2. MACD (12, 26, 9) -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white">2. مؤشر الماكد MACD (12,26,9)</span>
+                            <span class="${(isLong ? c.macdBullish : c.macdBearish) ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                                ${(isLong ? c.macdBullish : c.macdBearish) ? '✓ متحقق' : '✗ غير متحقق'}
+                            </span>
+                        </div>
+                        <div class="font-mono-num text-slate-300 text-[11px]">
+                            MACD Line [i]: ${m.macdCurr.toFixed(5)}
+                        </div>
+                        <div class="font-mono-num text-slate-300 text-[11px]">
+                            Signal Line [i]: ${m.sigCurr.toFixed(5)} (Hist: ${m.histCurr.toFixed(5)})
+                        </div>
+                    </div>
+
+                    <!-- 3. Stochastic (14, 3, 3) -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white">3. الستوكاستيك Stochastic (14,3,3)</span>
+                            <span class="${(isLong ? c.stochBullish : c.stochBearish) ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                                ${(isLong ? c.stochBullish : c.stochBearish) ? '✓ متحقق' : '✗ غير متحقق'}
+                            </span>
+                        </div>
+                        <div class="font-mono-num text-slate-300 text-[11px]">
+                            الحالية [i]: %K (${m.kCurr.toFixed(2)}) vs %D (${m.dCurr.toFixed(2)})
+                        </div>
+                        <div class="font-mono-num text-slate-400 text-[11px]">
+                            السابقة [i-1]: %K (${m.kPrev.toFixed(2)}) &rarr; ميل %K ${m.kCurr > m.kPrev ? 'صاعد ↑' : 'هابط ↓'}
+                        </div>
+                    </div>
+
+                    <!-- 4. Heikin Ashi Candle -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white">4. شمعة الهايكن آشي Heikin Ashi</span>
+                            <span class="${(isLong ? c.haBullish : c.haBearish) ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                                ${(isLong ? c.haBullish : c.haBearish) ? '✓ متحقق' : '✗ غير متحقق'}
+                            </span>
+                        </div>
+                        <div class="font-mono-num text-slate-300 text-[11px]">
+                            HA_Open [i]: ${formatPrice(m.haOpen)} | HA_Close [i]: ${formatPrice(m.haClose)}
+                        </div>
+                        <div class="text-[11px] ${c.haBullish ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                            لون الشمعة: ${c.haBullish ? 'خضراء صاعدة (HA_Close > HA_Open)' : 'حمراء هابطة (HA_Close < HA_Open)'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const linksDiv = document.getElementById('modalExternalLinks');
+            linksDiv.innerHTML = `
+                <a href="https://www.tradingview.com/chart/?symbol=BINANCE:${item.symbol}.P&interval=${tfMeta.tvInterval}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>فتح الشارت على TradingView (${item.timeframe})</span>
+                </a>
+                <a href="https://www.binance.com/en/futures/${item.symbol}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>فتح المنصة على Binance Futures</span>
+                </a>
+            `;
+
+            const modal = document.getElementById('inspectorModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInspectorModal() {
+            const modal = document.getElementById('inspectorModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleStrategyModal() {
+            const modal = document.getElementById('strategyModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function exportSignalsCSV() {
+            const list = APP_STATE.activeTab === 'WATCHLIST' ? APP_STATE.watchlistSignals : APP_STATE.detectedSignals;
+            if (list.length === 0) {
+                showToast('لا توجد إشارات حالية لتصديرها إلى ملف CSV', 'error');
+                return;
+            }
+
+            const headers = [
+                'Symbol',
+                'Timeframe',
+                'Signal_Type',
+                'Candle_Mode',
+                'Price_USDT',
+                'Change_24h_Pct',
+                'RSI_14_Prev',
+                'SMA_11_Prev',
+                'RSI_14_Curr',
+                'SMA_11_Curr',
+                'MACD_Line',
+                'MACD_Signal',
+                'Stoch_K',
+                'Stoch_D',
+                'HA_Status',
+                'Volume_24h_USDT',
+                'TradingView_Link'
+            ];
+
+            const rows = list.map(item => {
+                const m = item.metrics;
+                const tvInterval = TIMEFRAMES_MAP[item.timeframe].tvInterval;
+                return [
+                    item.symbol,
+                    item.timeframe,
+                    item.signalType,
+                    APP_STATE.candleMode,
+                    item.lastPrice,
+                    item.priceChangePercent.toFixed(2),
+                    m.rsiPrev.toFixed(2),
+                    m.smaPrev.toFixed(2),
+                    m.rsiCurr.toFixed(2),
+                    m.smaCurr.toFixed(2),
+                    m.macdCurr.toFixed(6),
+                    m.sigCurr.toFixed(6),
+                    m.kCurr.toFixed(2),
+                    m.dCurr.toFixed(2),
+                    item.conditions.haBullish ? 'GREEN_BULLISH' : 'RED_BEARISH',
+                    item.quoteVolume.toFixed(0),
+                    `https://www.tradingview.com/chart/?symbol=BINANCE:${item.symbol}.P&interval=${tvInterval}`
+                ].join(',');
+            });
+
+            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `binance_futures_signals_${APP_STATE.selectedTimeframe}_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            showToast('تم تصدير جدول الإشارات إلى ملف CSV بنجاح', 'info');
+        }
+
+        // Automatically start the initial scan when the page loads
+        window.onload = function () {
+            startFullScan();
+        };
+    </script>
+</body>
+</html>
